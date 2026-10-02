@@ -1,0 +1,163 @@
+# 🐱🎀 Neko Desktop
+
+> 猫娘人格化 Linux 桌面环境 —— 不是主题，不是插件，而是给电脑注入人格的一层。
+
+Neko Desktop 在 KDE Plasma 之上增加一个「人格化桌面层」，让电脑不再是工具，而是一个会回应、会变化、有状态、有生命感的计算环境。
+
+```
+Linux Kernel
+    ↓
+KDE Plasma
+    ↓
+Neko Desktop Layer（人格引擎）
+    ↓
+用户
+```
+
+---
+
+## 设计原则
+
+1. **全系统一致性** — 登录界面 → 桌面 → 任务栏 → 窗口 → 通知 → 文件管理器 → 终端 → 系统状态，处处是 Neko 风格。
+2. **不固定文字** — 欢迎语/反馈永远动态，根据时间、日期、系统状态、当前应用、工作状态变化。
+3. **中文优先 + English** — 双语显示，禁止日文。
+
+---
+
+## 架构
+
+```
+                Neko Core
+                   |
+        -----------+-----------
+        |          |          |
+     Hardware    Apps      Time
+        |          |          |
+        +----------+----------+
+                   |
+            Personality Engine
+                   |
+                   ↓
+            Desktop Reaction
+```
+
+---
+
+## 目录结构
+
+```
+neko-desktop/
+├── core/            # Neko Core 配置
+├── daemon/          # 后台守护进程 (状态采集/环境判断/反馈生成)
+├── personality/     # 人格引擎 (morning/work/night/deep-night/coding/ai/gaming/random)
+├── fish/            # Fish Shell 猫娘终端
+├── kitty/           # Kitty 玻璃终端
+├── kwin/            # KWin 玻璃效果脚本
+├── plasmoid/        # 桌面 HUD Widget (CPU/GPU/RAM/模式/时间)
+├── sddm/            # SDDM 登录界面主题 (粒子+猫耳+系统检查动画)
+├── scripts/         # 模式检测/状态/壁纸生成
+├── services/        # systemd user service
+└── installer/       # 一键安装器 (检测→备份→安装→测试→恢复)
+```
+
+---
+
+## 功能总览
+
+| 模块 | 说明 |
+|------|------|
+| **Neko Core** | 状态收集、环境判断、反馈生成、桌面表现控制 |
+| **Personality Engine** | 7 个人格 JSON，每条消息随机组合「称呼+状态+鼓励+系统信息」 |
+| **时间系统** | 06-12 清晨(亮粉) / 12-18 工作(稳定清晰) / 18-24 夜晚(深色安静) / 00-06 深夜(黑紫低亮度) |
+| **应用感知** | 检测 VS Code/JetBrains/Blender/Steam/VRChat/Ollama/vLLM/Python/CUDA → Coding / AI / Gaming 模式 |
+| **硬件监控** | CPU(型号/温度/频率/使用率) + GPU(NVIDIA RTX/Tesla、AMD) + VRAM |
+| **桌面 HUD** | Plasma Widget，顶部覆盖显示状态，可隐藏/移动/调透明度 |
+| **玻璃效果** | 透明 + 黑色遮罩 + 模糊，非纯透明 |
+| **Kitty 终端** | 猫娘 Prompt，启动随机欢迎，命令成功/失败反馈(不污染 stderr) |
+| **Fish Shell** | 欢迎语 + 系统状态 + 随机消息 |
+| **SDDM 登录** | 黑色背景 → 粒子 → 猫耳图标 → 文字 → 系统检查动画 |
+| **动态壁纸** | 按时间/模式切换 (AI实验室/游戏房/月光房) |
+| **通知系统** | 下载完成 / 错误通知 猫娘化 |
+| **多机器迁移** | 支持 Arch / Garuda / CachyOS，自动检测 KDE/Wayland/NVIDIA/Python |
+| **安全安装** | 检测→备份→安装→测试→恢复，备份到 ~/.config/neko-backup-日期 |
+
+---
+
+## 安装
+
+### 一键安装 (用户级)
+
+```bash
+cd neko-desktop
+./installer/install.sh
+```
+
+安装内容：Theme / Widget / KWin / SDDM / Kitty / Fish / Service。
+
+### 含 SDDM 登录主题 (需 root)
+
+```bash
+sudo ./installer/install.sh
+```
+
+装完后在 `系统设置 → 启动与关机 → 登录屏幕(SDDM)` 里选择 **Neko Sakura**。
+
+### 手动启用核心服务
+
+```bash
+systemctl --user enable --now neko-core.service
+systemctl --user status neko-core.service
+# 查看状态
+~/.config/neko-desktop/scripts/neko-status.sh
+```
+
+---
+
+## 使用
+
+| 场景 | 表现 |
+|------|------|
+| 打开终端 | 🐱🎀 猫娘提示符 + 动态问候 + 系统检查 |
+| 命令成功 | 🐱 完成啦 Command finished. |
+| 命令失败 | 😿 出现问题 Error detected. 让我们修复它。(不污染 stderr) |
+| 打开 VS Code | 🐱 Coding Mode，主人正在创造 |
+| 运行 ollama/vllm/cuda | 🤖 AI Laboratory，模型运行中，GPU 计算核心在线 |
+| 打开 Steam | 🎮 Gaming Mode，娱乐时间开始 |
+| 深夜 | 🖤 深夜模式，黑紫低亮度 |
+
+---
+
+## 硬件状态示例
+
+```
+🐱 System Status
+
+CPU  Ryzen 7 9800X3D   42%
+RTX 2060 SUPER         GPU: 50%  VRAM: 5GB/8GB
+Tesla P40              VRAM: 18GB/24GB
+```
+
+---
+
+## 环境要求
+
+- Arch / Garuda / CachyOS
+- KDE Plasma 6 + Wayland
+- Python 3
+- (可选) NVIDIA GPU / AMD GPU
+
+---
+
+## Roadmap
+
+- v1-v3 基础美化：Kitty / Fish / Theme
+- v4-v6 工程化：Core / Service / Config
+- v7-v8 KDE 集成：Widget / KWin / SDDM
+- v9 AI：本地模型 / 智能反馈
+- v10 完整 Neko Desktop：一键安装 / 多机器迁移 / AI 人格系统
+
+---
+
+## License
+
+MIT

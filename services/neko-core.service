@@ -1,0 +1,12 @@
+[Unit]
+Description=Neko Desktop Core 人格化桌面核心
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/.config/neko-desktop/daemon/neko_core.py --loop
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

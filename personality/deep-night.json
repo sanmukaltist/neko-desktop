@@ -1,0 +1,8 @@
+{
+  "banner": "🖤 深夜模式",
+  "greetings": ["🖤 深夜了，主人", "🌌 凌晨好，主人", "🐱 这么晚还没睡呀"],
+  "states": ["低亮度环境已就绪", "黑紫主题已启用", "静音守护中"],
+  "encouragements": ["早点休息，身体要紧哦", "明天再继续也来得及", "Neko 会一直守着你的"],
+  "system_lines": ["系统已运行 {uptime} 小时", "整夜守护模式"],
+  "english": ["Deep night mode", "Rest well, Master."]
+}

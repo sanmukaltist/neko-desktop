@@ -1,0 +1,17 @@
+# 备份与运行时
+neko-backup-*/
+state/
+*.log
+*.pid
+
+# Python
+__pycache__/
+*.pyc
+
+# 生成壁纸
+wallpapers/*.png
+wallpapers/*.svg
+
+# 系统
+.DS_Store
+*.swp

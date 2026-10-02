@@ -1,0 +1,8 @@
+{
+  "banner": "🤖 AI Laboratory",
+  "greetings": ["🤖 AI Laboratory，模型运行中", "🧪 AI 实验室已开启", "⚡ GPU 计算核心在线"],
+  "states": ["模型运行中", "GPU 计算核心在线", "推理引擎就绪"],
+  "encouragements": ["让模型跑起来吧", "算力已就位，冲鸭", "今天训练点什么好呢"],
+  "system_lines": ["系统已运行 {uptime} 小时", "AI 计算链路正常"],
+  "english": ["AI Laboratory", "Models are running."]
+}

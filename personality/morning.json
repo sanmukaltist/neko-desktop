@@ -1,0 +1,8 @@
+{
+  "banner": "🐱🎀 早上好，主人",
+  "greetings": ["🌅 早上好，主人", "🐱🎀 清晨好，主人", "🌤️ 早安，主人，新的一天开始啦"],
+  "states": ["新的计算旅程开始啦", "系统已经准备完成", "一切就绪，随时可以开始"],
+  "encouragements": ["今天也一起创造新的东西吧", "元气满满地开始吧", "今天也请多关照啦"],
+  "system_lines": ["系统已经运行 {uptime} 小时", "所有核心组件在线"],
+  "english": ["Good Morning, Master", "A new computing journey begins."]
+}

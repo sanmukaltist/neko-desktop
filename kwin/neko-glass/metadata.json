@@ -1,0 +1,13 @@
+{
+  "KPlugin": {
+    "Id": "neko-glass",
+    "Name": "Neko Glass",
+    "Name[zh_CN]": "猫娘玻璃",
+    "Description": "Neko Desktop 玻璃效果 KWin 脚本：半透明 + 模糊窗口管理。",
+    "Category": "Window Management",
+    "EnabledByDefault": false
+  },
+  "X-Plasma-API": "javascript",
+  "X-Plasma-MainScript": "code/main.js",
+  "KPackageStructure": "KWin/Script"
+}

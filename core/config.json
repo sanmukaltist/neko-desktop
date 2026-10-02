@@ -1,0 +1,27 @@
+{
+  "version": "10.0",
+  "project": "Neko Desktop",
+  "desktop_personality": "neko",
+  "language": ["zh-CN", "English"],
+  "no_japanese": true,
+  "time_segments": {
+    "morning":   [6, 12],
+    "work":      [12, 18],
+    "night":     [18, 24],
+    "deep-night": [0, 6]
+  },
+  "glass": {
+    "enabled": true,
+    "opacity": 0.16,
+    "black_mask": 0.25,
+    "blur_radius_px": 32
+  },
+  "hardware_monitor": true,
+  "dynamic_wallpaper": true,
+  "detection": {
+    "coding": ["code", "vscode", "pycharm", "webstorm", "goland", "clion", "idea", "jetbrains", "blender"],
+    "ai":     ["ollama", "vllm", "llama-server", "lmstudio", "cuda", "python"],
+    "gaming": ["steam", "vrchat", "gamescope", "lutris", "heroic"]
+  },
+  "interval_seconds": 15
+}

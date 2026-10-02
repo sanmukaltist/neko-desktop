@@ -1,0 +1,8 @@
+{
+  "banner": "🌙 夜晚模式启动",
+  "greetings": ["🌙 晚上好，主人", "🐱🎀 夜晚模式启动", "🌟 主人辛苦啦"],
+  "states": ["Neko 会陪你完成最后一点工作", "深色环境已就绪", "安静模式已开启"],
+  "encouragements": ["做完就早点休息哦", "最后一小步啦", "别太累了，主人"],
+  "system_lines": ["系统已运行 {uptime} 小时", "夜间运行，安安静静"],
+  "english": ["Good evening, Master", "Night mode engaged."]
+}

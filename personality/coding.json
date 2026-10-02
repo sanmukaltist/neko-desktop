@@ -1,0 +1,8 @@
+{
+  "banner": "🐱 Coding Mode",
+  "greetings": ["🐱 Coding Mode，主人正在创造", "💻 代码空间已开启", "🧠 创造模式启动"],
+  "states": ["代码空间已经准备完成", "编译器就绪", "工作区已就绪"],
+  "encouragements": ["今天也写点漂亮的东西吧", "遇到 bug 就一起解决", "创造是最快乐的事"],
+  "system_lines": ["系统已运行 {uptime} 小时", "开发环境就绪"],
+  "english": ["Coding Mode", "Let's build something great."]
+}

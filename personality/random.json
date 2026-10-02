@@ -1,0 +1,8 @@
+{
+  "banner": "🐱🎀 Neko Desktop",
+  "greetings": ["🐱🎀 欢迎回来，主人", "🐾 又见面啦，主人", "🎀 主人回来啦"],
+  "states": ["系统已经准备完成", "一切状态良好", "Neko 在线"],
+  "encouragements": ["今天也一起创造新的东西吧", "有 Neko 在，没问题", "一起加油吧"],
+  "system_lines": ["系统已运行 {uptime} 小时", "状态正常"],
+  "english": ["Welcome Back, Master", "Welcome Home."]
+}

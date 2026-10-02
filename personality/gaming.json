@@ -1,0 +1,8 @@
+{
+  "banner": "🎮 Gaming Mode",
+  "greetings": ["🎮 Gaming Mode，娱乐时间开始", "🕹️ 游戏模式启动", "✨ 放松时间到"],
+  "states": ["游戏环境已就绪", "GPU 性能模式", "高刷新已启用"],
+  "encouragements": ["玩得开心哦", "今晚大杀四方吧", "注意劳逸结合"],
+  "system_lines": ["系统已运行 {uptime} 小时", "图形性能模式"],
+  "english": ["Gaming Mode", "Have fun, Master."]
+}

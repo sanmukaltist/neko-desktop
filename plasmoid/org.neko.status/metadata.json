@@ -1,0 +1,13 @@
+{
+  "KPackageStructure": "Plasma/Applet",
+  "KPlugin": {
+    "Id": "org.neko.status",
+    "Name": "Neko Status",
+    "Name[zh_CN]": "猫娘状态",
+    "Description": "Neko Desktop HUD：CPU / GPU / RAM / 模式 / 时间",
+    "Category": "System Information",
+    "Icon": "face-smile",
+    "X-Plasma-API": "declarativeappletscript"
+  },
+  "X-Plasma-MainScript": "ui/main.qml"
+}

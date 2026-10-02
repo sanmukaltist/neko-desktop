@@ -1,0 +1,8 @@
+{
+  "banner": "🥇 工作模式",
+  "greetings": ["☀️ 工作模式，主人", "🐱 专注时间到，主人", "💻 下午好，主人"],
+  "states": ["工作空间稳定运行", "系统状态清晰稳定", "一切就绪"],
+  "encouragements": ["一起把任务搞定吧", "稳住，我们慢慢来", "需要 Neko 帮忙随时说"],
+  "system_lines": ["系统已运行 {uptime} 小时", "工作状态正常"],
+  "english": ["Good afternoon, Master", "Focus mode engaged."]
+}
