@@ -15,3 +15,6 @@ wallpapers/*.svg
 # 系统
 .DS_Store
 *.swp
+
+# Rust 构建产物
+rust/target/

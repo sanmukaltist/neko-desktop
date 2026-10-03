@@ -1,0 +1,27 @@
+[package]
+name = "neko-desktop-core"
+version = "10.0.0"
+edition = "2021"
+description = "Neko Desktop 人格化桌面核心 (Rust 重写)"
+
+[[bin]]
+name = "neko-core"
+path = "src/main.rs"
+
+[[bin]]
+name = "neko-notify"
+path = "src/bin/neko-notify.rs"
+
+[[bin]]
+name = "neko-notifyd"
+path = "src/bin/neko-notifyd.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

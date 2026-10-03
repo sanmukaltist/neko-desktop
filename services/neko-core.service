@@ -1,10 +1,10 @@
 [Unit]
-Description=Neko Desktop Core 人格化桌面核心
+Description=Neko Desktop Core 人格化桌面核心 (Rust)
 After=graphical-session.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 %h/.config/neko-desktop/daemon/neko_core.py --loop
+ExecStart=%h/.config/neko-desktop/bin/neko-core --loop
 Restart=on-failure
 RestartSec=5
 

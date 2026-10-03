@@ -13,6 +13,7 @@ THEMES = {
     "ai":         ("#0f1421", "#1e3a66", "🤖", "AI Laboratory"),
     "gaming":     ("#1a0f24", "#3a1f4f", "🎮", "Gaming Mode"),
     "default":    ("#17131c", "#241a2e", "🐱🎀", "Neko Desktop"),
+    "login":      ("#210a17", "#3a1130", "🐱🎀", "欢迎回来，主人 · Welcome Home"),
 }
 
 SVG = '''<svg xmlns="http://www.w3.org/2000/svg" width="2560" height="1440">

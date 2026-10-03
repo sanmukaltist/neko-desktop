@@ -161,3 +161,39 @@ Tesla P40              VRAM: 18GB/24GB
 ## License
 
 MIT
+
+---
+
+## Rust 核心 (v10.1)
+
+Neko Core 已用 Rust 重写（`rust/` 目录），二进制更小更快：
+
+```bash
+cd rust && cargo build --release
+# 产出: neko-core (守护) / neko-notify (猫娘通知CLI) / neko-notifyd (通知监听层)
+cargo run --release --bin neko-core -- --once
+```
+
+三个二进制已由安装器放入 `~/.config/neko-desktop/bin/`，systemd 服务自动使用：
+- `neko-core.service` — 状态采集/环境判断/反馈生成
+- `neko-notifyd.service` — 监听 DBus 通知，把「下载完成/错误/包管理」事件猫娘化播报
+
+## 登录界面 (Plasma 6.7 plasmalogin)
+
+Plasma 6.7 的登录管理器为 **plasmalogin**（内置 QML，不再读 SDDM 主题目录）。Neko 采用安全策略：
+- 登录界面强调色 → 写入 `AccentColor=255,140,198`（粉色）
+- 登录壁纸 → 生成的 `login.png`，在「系统设置 → 登录屏幕 → 更换壁纸」里选中即可
+
+> 不硬改编译进 greeter 的 QML，避免破坏登录。
+
+## 通知猫娘化
+
+`neko-notifyd` 监听会话总线通知调用，命中关键词时补发猫娘播报：
+- 下载完成 → 🐱 文件完成啦
+- 包错误 → 😿 Neko 发现问题 / Package Error
+- 通用错误 → 😿 Neko 发现问题 / Error detected
+
+`neko-notify` 提供 CLI 给脚本/其它程序直接发猫娘通知：
+```bash
+neko-notify "文件完成啦" "模型下载完成 12GB"
+```
