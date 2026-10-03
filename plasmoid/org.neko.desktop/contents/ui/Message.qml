@@ -3,36 +3,35 @@ import QtQuick 2.15
 Item {
     id: root
     property var status: ({})
-    property string segment: status.segment || "work"
 
     function greet() {
         var seg = status.segment || "work";
-        if (seg === "morning") return "🌅 早上好，主人";
-        if (seg === "work") return "🥇 工作时段，主人加油";
-        if (seg === "night") return "🌙 晚上好，主人";
-        return "🖤 夜深了，主人早点休息";
+        var mood = (status.personality && status.personality.mood) ? status.personality.mood : "";
+        var base;
+        if (seg === "morning") base = "🌅 早上好，主人";
+        else if (seg === "work") base = "🥇 工作时段，主人加油";
+        else if (seg === "night") base = "🌙 晚上好，主人";
+        else base = "🖤 夜深了，主人早点休息";
+        return mood ? (base + " · " + mood) : base;
     }
-    function randomLine() {
+    function pool() {
+        var arr = [];
         var L = (status.personality && status.personality.lines) ? status.personality.lines : [];
-        if (L.length === 0) return "";
-        return L[Math.floor(Math.random() * L.length)];
+        var S = (status.personality && status.personality.status_lang) ? status.personality.status_lang : [];
+        for (var i = 0; i < L.length; i++) arr.push("💬 " + L[i]);
+        for (var j = 0; j < S.length; j++) arr.push("✨ " + S[j]);
+        return arr;
     }
 
-    implicitHeight: greetText.implicitHeight + msgText.implicitHeight + 4
+    implicitHeight: greetText.implicitHeight + msgText.implicitHeight + 6
 
     Column {
-        spacing: 2
+        spacing: 3
         width: parent.width
         Text {
             id: greetText
-            text: {
-                var seg = root.status.segment || "work";
-                if (seg === "morning") return "🌅 早上好，主人";
-                if (seg === "work") return "🥇 工作时段，主人加油";
-                if (seg === "night") return "🌙 晚上好，主人";
-                return "🖤 夜深了，主人早点休息";
-            }
-            color: "#ffd6e8"; font.pixelSize: 16; font.bold: true
+            text: root.greet()
+            color: "#ffd6e8"; font.pixelSize: 15; font.bold: true
             width: parent.width; wrapMode: Text.WordWrap
         }
         Text {
@@ -45,15 +44,15 @@ Item {
         }
     }
 
-    Timer {
-        id: cycle
-        interval: 6000; running: true; repeat: true
-        onTriggered: { msgText.opacity = 0; pickTimer.start(); }
+    property int pi: 0
+    function next() {
+        var P = root.pool();
+        if (P.length === 0) { msgText.text = ""; return; }
+        msgText.text = P[root.pi % P.length];
+        msgText.opacity = 1;
+        root.pi++;
     }
-    Timer {
-        id: pickTimer
-        interval: 350
-        onTriggered: { msgText.text = root.randomLine(); msgText.opacity = 1; }
-    }
-    Component.onCompleted: { msgText.text = root.randomLine(); msgText.opacity = 1; }
+    Timer { interval: 6500; running: true; repeat: true; onTriggered: { msgText.opacity = 0; pickTimer.start(); } }
+    Timer { id: pickTimer; interval: 350; onTriggered: next() }
+    Component.onCompleted: next()
 }
