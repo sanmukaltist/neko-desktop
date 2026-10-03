@@ -222,6 +222,10 @@ fn handle(mut stream: TcpStream) {
     let resp = if path == "/chat" {
         let msg = serde_json::from_str::<Value>(&body).ok().and_then(|v| v["message"].as_str().map(|s| s.to_string())).unwrap_or_default();
         json!({"reply": process_chat(&msg)})
+    } else if path == "/history" {
+        let m = get_memory();
+        let h = m["history"].as_array().map(|a| a.iter().rev().take(30).rev().cloned().collect::<Vec<_>>()).unwrap_or_default();
+        json!({"history": h})
     } else if path == "/status" || path == "/" {
         let m = get_memory();
         json!({"ok": true, "facts": m["facts"].as_array().map(|a| a.len()).unwrap_or(0), "history": m["history"].as_array().map(|a| a.len()).unwrap_or(0), "model_port": LLM_HOST})

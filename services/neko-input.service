@@ -1,6 +1,6 @@
 [Unit]
-Description=Neko Desktop 悬浮气泡 (盖全屏展示)
-After=neko-brain.service
+Description=Neko Desktop 聊天输入窗 (可打字)
+After=neko-overlay.service
 
 [Service]
 Type=simple
@@ -12,7 +12,7 @@ Environment=XMODIFIERS=@im=fcitx
 Environment=GTK_IM_MODULE=fcitx
 Environment=DBUS_SESSION_BUS_ADDRESS=__DBUS__
 Environment=XDG_RUNTIME_DIR=__RUNTIME__
-ExecStart=/usr/bin/qml6 %h/.config/neko-desktop/overlay/bubble.qml
+ExecStart=/usr/bin/qml6 %h/.config/neko-desktop/overlay/input.qml
 Restart=on-failure
 RestartSec=5
 
