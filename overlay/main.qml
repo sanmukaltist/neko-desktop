@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Window 2.15
+import QtQuick.Layouts 1.15
 import Qt.labs.settings 1.0
 
 Window {
@@ -7,17 +8,13 @@ Window {
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.BypassWindowManagerHint | Qt.Tool
     color: "transparent"
     width: 340
-    height: 272
+    height: 380
     visible: true
     title: "neko-overlay"
 
-    property var status: ({
-        cpu: { usage: 0, temp: "", freq: "" },
-        gpus: [], ram: { usage: 0, used_gb: 0, total_gb: 0 },
-        mode: "normal", segment: "work", time: "", network: false,
-        personality: { banner: "🐱🎀 Neko Desktop", text: "", lines: [] }
-    })
+    property var status: ({ personality: { mood: "", banner: "🐱🎀 Neko", status_lang: [] }, mode: "normal", time: "" })
     property string dataUrl: "file://__HOME__/.config/neko-desktop/state/status.json"
+    property string chatUrl: "http://127.0.0.1:7799/chat"
 
     Settings {
         id: settings
@@ -28,36 +25,41 @@ Window {
     }
 
     Component.onCompleted: {
-        win.x = settings.posX
-        win.y = settings.posY
+        win.x = settings.posX; win.y = settings.posY
         refresh()
+        chatModel.append({ who: "neko", text: "主人好呀，想聊什么都可以跟我说喵～" })
     }
 
     function refresh() {
         var req = new XMLHttpRequest()
         req.onreadystatechange = function() {
             if (req.readyState === XMLHttpRequest.DONE) {
-                try { status = JSON.parse(req.responseText) } catch (e) {}
+                try { status = JSON.parse(req.responseText) } catch(e) {}
             }
         }
-        req.open("GET", dataUrl)
-        req.send()
+        req.open("GET", dataUrl); req.send()
+    }
+    Timer { interval: 5000; running: true; repeat: true; onTriggered: refresh() }
+
+    function sendChat() {
+        var t = input.text.trim()
+        if (t === "") return
+        input.text = ""
+        chatModel.append({ who: "user", text: t })
+        var req = new XMLHttpRequest()
+        req.onreadystatechange = function() {
+            if (req.readyState === XMLHttpRequest.DONE) {
+                var r = "（小脑袋还没连上，稍等一下喵）"
+                try { r = JSON.parse(req.responseText).reply } catch(e) {}
+                chatModel.append({ who: "neko", text: r })
+            }
+        }
+        req.open("POST", chatUrl)
+        req.setRequestHeader("Content-Type", "application/json")
+        req.send(JSON.stringify({ message: t }))
     }
 
-    Timer { interval: 3000; running: true; repeat: true; onTriggered: refresh() }
-
-    function shortGreet() {
-        var seg = status.segment || "work"
-        if (seg === "morning") return "🌅 早上好，主人"
-        if (seg === "work") return "🥇 工作时段，主人加油"
-        if (seg === "night") return "🌙 晚上好，主人"
-        return "🖤 夜深了，主人早点休息"
-    }
-    function firstLine() {
-        if (status.personality && status.personality.lines && status.personality.lines.length > 0)
-            return status.personality.lines[0]
-        return (status.personality && status.personality.text) ? status.personality.text : ""
-    }
+    ListModel { id: chatModel }
 
     Rectangle {
         id: panel
@@ -67,62 +69,73 @@ Window {
         border.color: "#66ff8cc6"
         border.width: 1
 
-        Row {
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.leftMargin: 14
-            anchors.topMargin: 12
-            spacing: 10
-            Text { id: avatar; text: "🐱"; font.pixelSize: 44 }
-            Column {
-                anchors.verticalCenter: avatar.verticalCenter
-                spacing: 2
-                Text { text: shortGreet(); color: "#ffd6e8"; font.pixelSize: 14; font.bold: true }
-                Text { text: (status.personality && status.personality.banner) ? status.personality.banner : ""; color: "#c9a0b5"; font.pixelSize: 11 }
-            }
-        }
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 14
+            spacing: 8
 
-        Column {
-            anchors.top: parent.top
-            anchors.topMargin: 86
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.leftMargin: 16
-            anchors.rightMargin: 16
-            spacing: 5
-
-            Text { text: "CPU " + (status.cpu.usage || 0) + "% " + (status.cpu.temp || ""); color: "#f5d6e6"; font.pixelSize: 11 }
-            Rectangle { width: parent.width; height: 6; radius: 3; color: "#3a2630"
-                Rectangle { height: 6; radius: 3; color: "#ff8cc6"; width: Math.max(0, Math.min(parent.width, parent.width * (status.cpu.usage || 0) / 100)) } }
-
-            Text { text: ((status.gpus && status.gpus[0]) ? (status.gpus[0].name + " " + (status.gpus[0].usage || 0) + "% " + (status.gpus[0].vram_used_gb || 0) + "G/" + (status.gpus[0].vram_total_gb || 0) + "G") : "GPU"); color: "#f5d6e6"; font.pixelSize: 11 }
-            Rectangle { width: parent.width; height: 6; radius: 3; color: "#2a3340"
-                Rectangle { height: 6; radius: 3; color: "#8fc7ff"; width: Math.max(0, Math.min(parent.width, parent.width * ((status.gpus && status.gpus[0]) ? status.gpus[0].usage : 0) / 100)) } }
-
-            Text { text: "RAM " + (status.ram.usage || 0) + "% (" + (status.ram.used_gb || 0) + "G/" + (status.ram.total_gb || 0) + "G)"; color: "#f5d6e6"; font.pixelSize: 11 }
-            Rectangle { width: parent.width; height: 6; radius: 3; color: "#3a2630"
-                Rectangle { height: 6; radius: 3; color: "#a8e6b0"; width: Math.max(0, Math.min(parent.width, parent.width * (status.ram.usage || 0) / 100)) } }
-
-            Text { text: firstLine(); color: "#e8c6d8"; font.pixelSize: 10; width: parent.width; wrapMode: Text.WordWrap; elide: Text.ElideRight; maximumLineCount: 2 }
-
+            // 头部可拖拽区
             Row {
+                Layout.fillWidth: true
                 spacing: 10
-                Text { text: "🧪 " + (status.mode || "normal"); color: "#ffaad6"; font.pixelSize: 11 }
-                Text { text: (status.network ? "🌐 在线" : "📡 离线"); color: (status.network ? "#a8e6b0" : "#ff8cc6"); font.pixelSize: 11 }
-                Text { text: status.time || ""; color: "#c9a0b5"; font.pixelSize: 11 }
+                Text { text: "🐱"; font.pixelSize: 36 }
+                Column {
+                    spacing: 2
+                    Text {
+                        text: (status.personality && status.personality.status_lang && status.personality.status_lang.length > 0)
+                            ? ("[" + status.personality.mood + "] " + status.personality.status_lang[0]) : "🐱 你好呀，主人～"
+                        color: "#ffd6e8"; font.pixelSize: 12; font.bold: true; wrapMode: Text.WordWrap; width: 250
+                    }
+                    Text { text: (status.personality && status.personality.banner) ? status.personality.banner : ""; color: "#c9a0b5"; font.pixelSize: 10 }
+                }
+                MouseArea {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 44
+                    property real sx: 0; property real sy: 0
+                    onPressed: { sx = mouseX; sy = mouseY }
+                    onPositionChanged: { if (pressed) { win.x += mouseX - sx; win.y += mouseY - sy } }
+                    onReleased: { settings.posX = win.x; settings.posY = win.y }
+                }
+            }
+
+            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: "#33ffd6e8" }
+
+            // 聊天区
+            ListView {
+                id: chatView
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                model: chatModel
+                clip: true
+                spacing: 6
+                delegate: Text {
+                    width: chatView.width
+                    text: (model.who === "user" ? "⚘ 你：" : "🐱 ") + model.text
+                    color: model.who === "user" ? "#ffaad6" : "#f0dfe8"
+                    font.pixelSize: 11
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            // 输入框
+            Row {
+                Layout.fillWidth: true
+                spacing: 6
+                Rectangle {
+                    width: parent.width - 56; height: 30; radius: 8; color: "#22000000"; border.color: "#44ff8cc6"
+                    TextInput {
+                        id: input
+                        anchors.fill: parent; anchors.margins: 6
+                        color: "#fff"; font.pixelSize: 12; clip: true
+                        Keys.onReturnPressed: sendChat()
+                    }
+                }
+                Rectangle {
+                    width: 50; height: 30; radius: 8; color: "#ff8cc6"
+                    Text { anchors.centerIn: parent; text: "发送"; color: "#1a0f1a"; font.pixelSize: 12; font.bold: true }
+                    MouseArea { anchors.fill: parent; onClicked: sendChat() }
+                }
             }
         }
-    }
-
-    MouseArea {
-        id: dragArea
-        anchors.fill: parent
-        property real sx: 0
-        property real sy: 0
-        onPressed: { sx = mouseX; sy = mouseY }
-        onPositionChanged: {
-            if (pressed) { win.x += mouseX - sx; win.y += mouseY - sy }
-        }
-        onReleased: { settings.posX = win.x; settings.posY = win.y }
     }
 }

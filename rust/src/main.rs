@@ -1,5 +1,4 @@
-/// Neko Core — 人格化桌面核心守护进程 (Rust 重写 v10.0)
-/// 职责: 状态收集 | 环境判断 | 反馈生成 | 桌面表现
+/// Neko Core — 人格化桌面核心守护进程 (Rust v10.3 动态人格)
 use serde_json::{json, Value};
 use std::env;
 use std::fs;
@@ -9,15 +8,13 @@ use std::process::Command;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+mod dynamic;
+
 // ---------- 路径 ----------
 fn home() -> String { env::var("HOME").unwrap_or_else(|_| "/home/sanmuk".into()) }
 fn config_dir() -> PathBuf { PathBuf::from(home()).join(".config/neko-desktop") }
-fn repo_dir() -> PathBuf {
-    // rust/src/main.rs -> repo = rust/.. = repo
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).parent().map(|p| p.to_path_buf()).unwrap_or_default()
-}
 
-// ---------- 随机 (xorshift, 无 rand 依赖) ----------
+// ---------- 随机 ----------
 static SEED: AtomicU64 = AtomicU64::new(0);
 fn rand_u64() -> u64 {
     let mut x = SEED.load(Ordering::Relaxed);
@@ -29,9 +26,6 @@ fn rand_u64() -> u64 {
     SEED.store(x, Ordering::Relaxed);
     x
 }
-fn pick(v: &[String]) -> String {
-    if v.is_empty() { String::new() } else { v[(rand_u64() as usize) % v.len()].clone() }
-}
 
 // ---------- shell ----------
 fn sh(cmd: &str) -> String {
@@ -40,7 +34,6 @@ fn sh(cmd: &str) -> String {
         .unwrap_or_default()
 }
 
-// ---------- token 匹配 (短词用词边界) ----------
 fn contains_token(hay: &str, tok: &str) -> bool {
     let h = hay.as_bytes(); let t = tok.as_bytes();
     if t.is_empty() { return false; }
@@ -58,7 +51,6 @@ fn contains_token(hay: &str, tok: &str) -> bool {
 
 // ---------- 硬件采集 ----------
 fn cpu_info() -> Value {
-    // 型号
     let mut model = String::new();
     if let Ok(s) = fs::read_to_string("/proc/cpuinfo") {
         for line in s.lines() {
@@ -68,14 +60,12 @@ fn cpu_info() -> Value {
             }
         }
     }
-    // 使用率 (两次采样)
     fn stat_sample() -> (u64, u64) {
         if let Ok(first) = fs::read_to_string("/proc/stat") {
             if let Some(line) = first.lines().next() {
-                let v: Vec<u64> = line.split_whitespace().skip(1)
-                    .filter_map(|x| x.parse().ok()).collect();
+                let v: Vec<u64> = line.split_whitespace().skip(1).filter_map(|x| x.parse().ok()).collect();
                 let total: u64 = v.iter().sum();
-                let idle = *v.get(3).unwrap_or(&0); // user,nice,system,idle,...
+                let idle = *v.get(3).unwrap_or(&0);
                 return (total, idle);
             }
         }
@@ -89,7 +79,6 @@ fn cpu_info() -> Value {
         (100.0 * (1.0 - di as f64 / dt as f64)).clamp(0.0, 100.0)
     } else { 0.0 };
 
-    // 温度
     let mut temp = String::new();
     let mut paths: Vec<PathBuf> = Vec::new();
     if let Ok(rd) = fs::read_dir("/sys/class/hwmon") {
@@ -107,31 +96,14 @@ fn cpu_info() -> Value {
     for p in paths {
         if let Ok(s) = fs::read_to_string(&p) {
             if let Ok(v) = s.trim().parse::<i64>() {
-                if v > 0 {
-                    let c = if v > 200 { v / 1000 } else { v };
-                    temp = format!("{c}°C"); break;
-                }
+                if v > 0 { let c = if v > 200 { v / 1000 } else { v }; temp = format!("{c}°C"); break; }
             }
         }
     }
-
-    // 频率
     let mut freq = String::new();
     if let Ok(s) = fs::read_to_string("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq") {
         if let Ok(khz) = s.trim().parse::<f64>() { freq = format!("{:.0} MHz", khz / 1000.0); }
     }
-    if freq.is_empty() {
-        if let Ok(s) = fs::read_to_string("/proc/cpuinfo") {
-            for line in s.lines() {
-                if let Some(v) = line.strip_prefix("cpu MHz") {
-                    if let Some(vv) = v.trim_start_matches(':').trim().split('.').next() {
-                        freq = format!("{vv} MHz"); break;
-                    }
-                }
-            }
-        }
-    }
-
     json!({ "model": model, "usage": ((usage * 10.0).round() / 10.0), "temp": temp, "freq": freq })
 }
 
@@ -152,9 +124,7 @@ fn gpu_info() -> Vec<Value> {
             }));
         }
     }
-    if gpus.is_empty() {
-        gpus.push(json!({ "name": "GPU", "temp": "", "usage": 0.0, "vram_used_gb": 0.0, "vram_total_gb": 0.0 }));
-    }
+    if gpus.is_empty() { gpus.push(json!({ "name": "GPU", "temp": "", "usage": 0.0, "vram_used_gb": 0.0, "vram_total_gb": 0.0 })); }
     gpus
 }
 
@@ -186,15 +156,12 @@ fn net_ok() -> bool {
     TcpStream::connect_timeout(&"1.1.1.1:53".parse().unwrap(), Duration::from_secs(2)).is_ok()
 }
 
-// ---------- 模式检测 ----------
 fn detect_mode(cfg: &Value) -> Option<String> {
     let det = cfg.get("detection").unwrap_or(&Value::Null);
     let list = |k: &str| -> Vec<String> {
         det.get(k).and_then(Value::as_array).map(|a| a.iter().filter_map(|x| x.as_str().map(|s| s.to_lowercase())).collect()).unwrap_or_default()
     };
-    let gaming = list("gaming");
-    let ai = list("ai");
-    let coding = list("coding");
+    let gaming = list("gaming"); let ai = list("ai"); let coding = list("coding");
     let ps = sh("ps -eo comm,args=").to_lowercase();
     let has = |tokens: &[String]| tokens.iter().any(|t| if t.len() <= 5 { contains_token(&ps, t) } else { ps.contains(t.as_str()) });
     if has(&gaming) { return Some("gaming".into()); }
@@ -203,88 +170,16 @@ fn detect_mode(cfg: &Value) -> Option<String> {
     None
 }
 
-// ---------- 人格 ----------
-#[derive(serde::Deserialize)]
-struct Personality {
-    #[serde(default)] banner: String,
-    #[serde(default)] greetings: Vec<String>,
-    #[serde(default)] states: Vec<String>,
-    #[serde(default)] encouragements: Vec<String>,
-    #[serde(default)] system_lines: Vec<String>,
-    #[serde(default)] english: Vec<String>,
-}
-
-fn personality_dir() -> PathBuf {
-    let d1 = config_dir().join("personality");
-    if d1.is_dir() { return d1; }
-    let d2 = repo_dir().join("personality");
-    if d2.is_dir() { return d2; }
-    d2
-}
-
-fn load_personality(name: &str) -> Option<Personality> {
-    let p = personality_dir().join(format!("{name}.json"));
-    fs::read_to_string(&p).ok().and_then(|s| serde_json::from_str(&s).ok())
-}
-
-fn compose_personality(mode: &Option<String>, segment: &str, upt_h: u64) -> Value {
-    let key = mode.clone().unwrap_or_else(|| segment.to_string());
-    let p = load_personality(&key).or_else(|| load_personality("random")).unwrap_or(Personality {
-        banner: "🐱🎀 Neko Desktop".into(), greetings: vec![], states: vec![], encouragements: vec![], system_lines: vec![], english: vec![]
-    });
-    let g = pick(&p.greetings);
-    let s = pick(&p.states);
-    let e = pick(&p.encouragements);
-    let mut sysline = pick(&p.system_lines);
-    if !sysline.is_empty() { sysline = sysline.replace("{uptime}", &upt_h.to_string()); }
-    let en = pick(&p.english);
-    let mut lines: Vec<String> = Vec::new();
-    for x in [&g, &s, &sysline, &e, &en] { if !x.is_empty() { lines.push(x.clone()); } }
-    let text = lines.join(" ");
-    json!({ "key": key, "banner": p.banner, "text": text, "english": en, "lines": lines })
-}
-
-// ---------- 时间分段 ----------
 fn time_segment(h: u32) -> &'static str {
-    if (6..12).contains(&h) { "morning" }
-    else if (12..18).contains(&h) { "work" }
-    else if (18..24).contains(&h) { "night" }
-    else { "deep-night" }
+    if (6..12).contains(&h) { "morning" } else if (12..18).contains(&h) { "work" } else if (18..24).contains(&h) { "night" } else { "deep-night" }
 }
 
-// ---------- 配置 ----------
 fn load_config() -> Value {
     let p = config_dir().join("core/config.json");
-    let rp = repo_dir().join("core/config.json");
-    for p in [&p, &rp] {
-        if let Ok(s) = fs::read_to_string(p) {
-            if let Ok(v) = serde_json::from_str(&s) { return v; }
-        }
+    if let Ok(s) = fs::read_to_string(&p) {
+        if let Ok(v) = serde_json::from_str(&s) { return v; }
     }
     json!({})
-}
-
-// ---------- 状态 ----------
-fn build_state(cfg: &Value) -> Value {
-    let mode = detect_mode(cfg);
-    let hour: u32 = sh("date +%H").trim().parse().unwrap_or(12);
-    let segment = time_segment(hour);
-    let (h, m) = uptime_hms();
-    let now = sh("date +%Y-%m-%dT%H:%M:%S");
-    let hms = sh("date +%H:%M");
-    json!({
-        "timestamp": now,
-        "time": hms,
-        "mode": mode.clone().unwrap_or_else(|| segment.to_string()),
-        "mode_source": if mode.is_some() { "app" } else { "time" },
-        "segment": segment,
-        "cpu": cpu_info(),
-        "gpus": gpu_info(),
-        "ram": ram_info(),
-        "uptime": { "hours": h, "minutes": m },
-        "network": net_ok(),
-        "personality": compose_personality(&mode, segment, h),
-    })
 }
 
 fn write_state(state: &Value) {
@@ -300,10 +195,54 @@ fn notify(state: &Value) {
     let title = p.get("banner").and_then(Value::as_str).map(|s| s.to_string()).unwrap_or_else(|| "🐱🎀 Neko Desktop".into());
     let body = p.get("text").and_then(Value::as_str).unwrap_or("").to_string();
     let _ = Command::new("notify-send").args(["-a", "Neko Desktop", &title, &body]).output();
-    let _ = Command::new("kdialog").args(["--title", &title, "--passivepopup", &body, "5"]).output();
 }
 
-// ---------- main ----------
+fn build_state(cfg: &Value) -> Value {
+    let mode = detect_mode(cfg);
+    let hour: u32 = sh("date +%H").trim().parse().unwrap_or(12);
+    let segment = time_segment(hour);
+    let (h, m) = uptime_hms();
+    let now = sh("date +%Y-%m-%dT%H:%M:%S");
+    let hms = sh("date +%H:%M");
+    let weekday: u32 = sh("date +%u").trim().parse().unwrap_or(1);
+    let doy: u32 = sh("date +%j").trim().parse().unwrap_or(1);
+
+    let cpu = cpu_info();
+    let gpus = gpu_info();
+    let ram = ram_info();
+    let net = net_ok();
+    let cpu_usage = cpu["usage"].as_f64().unwrap_or(0.0);
+    let gpu_usage = gpus.first().and_then(|g| g["usage"].as_f64()).unwrap_or(0.0);
+    let gpu_vram_used = gpus.first().and_then(|g| g["vram_used_gb"].as_f64()).unwrap_or(0.0);
+    let gpu_vram_total = gpus.first().and_then(|g| g["vram_total_gb"].as_f64()).unwrap_or(0.0);
+    let ram_usage = ram["usage"].as_f64().unwrap_or(0.0);
+    let temp_c = cpu["temp"].as_str().unwrap_or("40°C").trim_end_matches("°C").parse::<f64>().unwrap_or(40.0);
+
+    let inputs = dynamic::StateInputs {
+        segment, weekday, doy, mode: mode.clone(),
+        cpu_usage, gpu_usage, gpu_vram_used, gpu_vram_total, ram_usage,
+        net, temp_c, uptime_h: h,
+    };
+    let d = dynamic::generate(&inputs);
+
+    json!({
+        "timestamp": now, "time": hms,
+        "mode": mode.clone().unwrap_or_else(|| segment.to_string()),
+        "mode_source": if mode.is_some() { "app" } else { "time" },
+        "segment": segment, "weekday": weekday,
+        "cpu": cpu, "gpus": gpus, "ram": ram,
+        "uptime": { "hours": h, "minutes": m },
+        "network": net,
+        "personality": {
+            "key": mode.clone().unwrap_or_else(|| segment.to_string()),
+            "banner": d.banner, "mood": d.mood,
+            "text": d.lines.join("  ·  "),
+            "english": d.english, "lines": d.lines,
+            "status_lang": d.status_lang,
+        },
+    })
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let once = args.iter().any(|a| a == "--once");
@@ -319,8 +258,8 @@ fn main() {
         loop {
             if let Ok(state) = std::panic::catch_unwind(|| build_state(&cfg)) {
                 write_state(&state);
-                let m = state.get("mode").and_then(Value::as_str).map(|s| s.to_string());
-                if m != last_mode { notify(&state); last_mode = m; }
+                let mm = state.get("mode").and_then(Value::as_str).map(|s| s.to_string());
+                if mm != last_mode { notify(&state); last_mode = mm; }
             }
             std::thread::sleep(Duration::from_secs(iv));
         }

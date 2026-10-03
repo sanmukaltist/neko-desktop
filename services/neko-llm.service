@@ -1,0 +1,12 @@
+[Unit]
+Description=Neko Chat 小模型 (Qwen2.5-1.5B)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/sanmuk/ai-workspace/llama.cpp/build-vulkan/bin/llama-server --model %h/.config/neko-desktop/models/qwen2.5-1.5b-instruct-q4_k_m.gguf --host 127.0.0.1 --port 8082 --ctx-size 4096 --threads 4 --n-gpu-layers 0 --alias neko --parallel 1
+Restart=on-failure
+RestartSec=8
+
+[Install]
+WantedBy=default.target

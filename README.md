@@ -206,3 +206,13 @@ neko-notify "文件完成啦" "模型下载完成 12GB"
 - `plasmoid/org.neko.status` — 任务栏组件：一句话「问候语 + 模式」，点击展开完整状态面板（双 GPU 遍历、网络、人格台词）。
 - `services/neko-overlay.service` — 悬浮窗 systemd 用户服务，随核心一起启动。
 - 数据统一来自 `neko-core` 写出的 `state/status.json`，两个组件开销≈0。
+
+---
+
+## 猫娘大脑 (v10.3 — 聊天/记忆/指令)
+
+- `rust/src/bin/neko-brain.rs` — 猫娘大脑 HTTP 微服务（127.0.0.1:7799）：对接本地小模型聊天、JSON 长期记忆、指令白名单（打开应用/换壁纸/锁屏/查时间/查状态）。
+- `rust/src/dynamic.rs` — 动态人格引擎：状态语言、时间/场景/互动感、每日心情变化（按日期种子）。
+- `overlay/main.qml` — 悬浮窗改造为「猫娘对话气泡」：顶部问候 + 聊天区 + 输入框。
+- `services/neko-llm.service` — Qwen2.5-1.5B 小模型（纯 CPU，不抢 GPU 显存），下载后启动即可聊天。
+- 小模型：`~/.config/neko-desktop/models/qwen2.5-1.5b-instruct-q4_k_m.gguf`（~1GB）。
