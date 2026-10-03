@@ -108,6 +108,7 @@ PlasmoidItem {
                         id: input
                         anchors.fill: parent; anchors.margins: 5
                         color: "#fff"; font.pixelSize: 11; clip: true
+                        activeFocusOnPress: true
                         Keys.onReturnPressed: sendChat()
                     }
                 }

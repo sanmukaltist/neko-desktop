@@ -28,7 +28,9 @@ Window {
         win.x = settings.posX; win.y = settings.posY
         refresh()
         chatModel.append({ who: "neko", text: "主人好呀，想聊什么都可以跟我说喵～" })
+        focusTimer.start()
     }
+    Timer { id: focusTimer; interval: 300; onTriggered: { win.requestActivate(); win.raise(); input.forceActiveFocus(); } }
 
     function refresh() {
         var req = new XMLHttpRequest()
@@ -57,6 +59,7 @@ Window {
         req.open("POST", chatUrl)
         req.setRequestHeader("Content-Type", "application/json")
         req.send(JSON.stringify({ message: t }))
+        input.forceActiveFocus()
     }
 
     ListModel { id: chatModel }
@@ -127,6 +130,7 @@ Window {
                         id: input
                         anchors.fill: parent; anchors.margins: 6
                         color: "#fff"; font.pixelSize: 12; clip: true
+                        activeFocusOnPress: true
                         Keys.onReturnPressed: sendChat()
                     }
                 }
