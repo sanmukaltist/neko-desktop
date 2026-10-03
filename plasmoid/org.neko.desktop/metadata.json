@@ -1,0 +1,15 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "org.neko.desktop",
+        "Name": "Neko Desktop",
+        "Name[zh_CN]": "猫娘桌面组件",
+        "Description": "AI personality layer for KDE Plasma 6",
+        "Description[zh_CN]": "猫娘人格化桌面组件：问候语 / 人格消息 / 系统状态",
+        "Category": "System Information",
+        "Icon": "face-smile",
+        "Version": "1.0"
+    },
+    "X-Plasma-API": "declarativeappletscript",
+    "X-Plasma-MainScript": "ui/main.qml"
+}

@@ -1,0 +1,12 @@
+[Unit]
+Description=Neko Desktop DBus 后端
+After=neko-core.service
+
+[Service]
+Type=simple
+ExecStart=%h/.config/neko-desktop/bin/neko-dbus
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
