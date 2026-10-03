@@ -12,6 +12,7 @@ use std::time::Duration;
 
 const PORT: u16 = 7799;
 const LLM_HOST: &str = "127.0.0.1:8082";
+const MEM_HOST: &str = "127.0.0.1:7797";
 
 static MEMORY: Mutex<Option<Value>> = Mutex::new(None);
 
@@ -151,6 +152,37 @@ fn read_resp_body(s: &mut TcpStream) -> String {
     body
 }
 
+
+fn mem_recall(query: &str) -> Vec<String> {
+    let body = json!({"query": query, "k": 4}).to_string();
+    let req = format!("POST /recall HTTP/1.1\r\nHost: {MEM_HOST}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}", body.len(), body);
+    let mut out = Vec::new();
+    if let Ok(mut s) = TcpStream::connect(MEM_HOST) {
+        let _ = s.set_read_timeout(Some(Duration::from_secs(8)));
+        if s.write_all(req.as_bytes()).is_ok() {
+            let resp = read_resp_body(&mut s);
+            if let Ok(v) = serde_json::from_str::<Value>(&resp) {
+                if let Some(arr) = v["results"].as_array() {
+                    for r in arr {
+                        if let Some(t) = r["text"].as_str() { out.push(t.to_string()); }
+                    }
+                }
+            }
+        }
+    }
+    out
+}
+
+fn mem_remember(text: &str, speaker: &str) {
+    let body = json!({"text": text, "speaker": speaker}).to_string();
+    let req = format!("POST /remember HTTP/1.1\r\nHost: {MEM_HOST}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}", body.len(), body);
+    if let Ok(mut s) = TcpStream::connect(MEM_HOST) {
+        let _ = s.set_read_timeout(Some(Duration::from_secs(5)));
+        let _ = s.write_all(req.as_bytes());
+        let _ = read_resp_body(&mut s);
+    }
+}
+
 fn llm_chat(messages: &[Value]) -> String {
     let body = json!({"model":"neko","messages":messages,"temperature":0.8,"max_tokens":256,"stream":false});
     let bs = body.to_string();
@@ -179,11 +211,17 @@ fn process_chat(msg: &str) -> String {
         mem["history"].as_array_mut().unwrap().push(json!({"role":"assistant","content":r}));
         trim_history(&mut mem);
         set_memory(mem);
+        mem_remember(msg, "user");
+        mem_remember(&r, "assistant");
         return r;
     }
 
     extract_facts(msg, &mut mem);
-    let sys = system_prompt();
+    let mut sys = system_prompt();
+    let recalled = mem_recall(msg);
+    if !recalled.is_empty() {
+        sys = format!("{}\n你还能回忆起关于主人的这些事：{}", sys, recalled.join("；"));
+    }
     let mut messages = vec![json!({"role":"system","content":sys})];
     let h = mem["history"].as_array().unwrap().clone();
     for m in h.iter().rev().take(10).rev() { messages.push(m.clone()); }
@@ -197,6 +235,8 @@ fn process_chat(msg: &str) -> String {
     mem["history"].as_array_mut().unwrap().push(json!({"role":"assistant","content":reply}));
     trim_history(&mut mem);
     set_memory(mem);
+    mem_remember(msg, "user");
+    mem_remember(&reply, "assistant");
     reply
 }
 

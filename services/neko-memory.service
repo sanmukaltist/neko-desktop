@@ -1,0 +1,14 @@
+[Unit]
+Description=Neko LSTM 记忆状态机
+After=network.target
+
+[Service]
+Type=simple
+Environment=CUDA_VISIBLE_DEVICES=
+Environment=OMP_NUM_THREADS=2
+ExecStart=/home/sanmuk/ai-workspace/myenv/bin/python %h/.config/neko-desktop/memory/neko-memory.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
