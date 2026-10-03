@@ -6,6 +6,7 @@ After=neko-core.service
 Type=simple
 Environment=QT_QPA_PLATFORM=xcb
 Environment=DISPLAY=__DISPLAY__
+Environment=QML_XHR_ALLOW_FILE_READ=1
 ExecStart=/usr/bin/qml6 %h/.config/neko-desktop/overlay/main.qml
 Restart=on-failure
 RestartSec=5
