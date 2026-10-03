@@ -1,0 +1,14 @@
+[Unit]
+Description=Neko Desktop 悬浮置顶组件
+After=neko-core.service
+
+[Service]
+Type=simple
+Environment=QT_QPA_PLATFORM=xcb
+Environment=DISPLAY=__DISPLAY__
+ExecStart=/usr/bin/qml6 %h/.config/neko-desktop/overlay/main.qml
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

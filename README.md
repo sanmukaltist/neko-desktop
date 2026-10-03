@@ -197,3 +197,12 @@ Plasma 6.7 的登录管理器为 **plasmalogin**（内置 QML，不再读 SDDM �
 ```bash
 neko-notify "文件完成啦" "模型下载完成 12GB"
 ```
+
+---
+
+## 悬浮置顶窗 + 任务栏组件 (v10.2)
+
+- `overlay/main.qml` — 屏幕最顶层悬浮窗：猫娘头像气泡 + CPU/GPU/RAM/网络/模式/人格台词。用 `qml6` + XWayland(xcb) override-redirect 实现「置顶覆盖全屏」，鼠标拖动即可挪位置，位置自动记住（`state/overlay.conf`）。
+- `plasmoid/org.neko.status` — 任务栏组件：一句话「问候语 + 模式」，点击展开完整状态面板（双 GPU 遍历、网络、人格台词）。
+- `services/neko-overlay.service` — 悬浮窗 systemd 用户服务，随核心一起启动。
+- 数据统一来自 `neko-core` 写出的 `state/status.json`，两个组件开销≈0。
