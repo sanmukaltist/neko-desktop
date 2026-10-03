@@ -23,13 +23,15 @@ fn classify(summary: &str, body: &str) -> Option<(String, String)> {
     let is_pkg = ["pacman", "paru", "package", "软件包", "包管理"].iter().any(|k| all.contains(k));
 
     if is_download {
-        return Some(("🐱 文件完成啦".into(), format!("{summary}\nDownload finished.")));
+        let detail = if !body.is_empty() { format!("{body}\nDownload finished.") } else { summary.to_string() };
+        return Some(("🐱 文件完成啦".into(), detail));
     }
     if is_error && is_pkg {
         return Some(("😿 Neko 发现问题".into(), format!("Package Error\n{summary}")));
     }
     if is_error {
-        return Some(("😿 Neko 发现问题".into(), format!("Error detected.\n{summary}")));
+        let detail = if !body.is_empty() { format!("Error detected.\n{body}") } else { format!("Error detected.\n{summary}") };
+        return Some(("😿 Neko 发现问题".into(), detail));
     }
     None
 }
@@ -37,7 +39,7 @@ fn classify(summary: &str, body: &str) -> Option<(String, String)> {
 fn spawn_monitor() -> Option<Child> {
     Command::new("dbus-monitor")
         .args([
-            "session",
+            "--session",
             "type='method_call',interface='org.freedesktop.Notifications',member='Notify'",
         ])
         .stdout(Stdio::piped())
@@ -55,31 +57,28 @@ fn main() {
         };
         let stdout = child.stdout.expect("stdout");
         let reader = BufReader::new(stdout);
+        // Notify 实参 string 顺序: 0=app_name 1=app_icon 2=summary 3=body
+        // (replaces_id 是 uint32; summary/body 之后的 string 是 hints 的 key/value)
         let mut strings: Vec<String> = Vec::new();
-        let mut in_notify = false;
 
         for line in reader.lines().map_while(Result::ok) {
             if line.contains("member=Notify") && line.contains("method call") {
-                in_notify = true;
                 strings.clear();
                 continue;
             }
-            if in_notify {
-                if line.trim().is_empty() || line.contains("method call time") || line.contains("signal time") {
-                    in_notify = false;
-                    // Notify 参数顺序: 0=app_name 1=id 2=icon 3=summary 4=body
-                    if strings.len() >= 4 {
-                        let summary = strings[3].clone();
-                        let body = if strings.len() >= 5 { strings[4].clone() } else { String::new() };
-                        if let Some((t, b)) = classify(&summary, &body) {
-                            catgirl_notify(&t, &b);
-                        }
-                    }
-                    strings.clear();
-                } else if let Some(pos) = line.find("string \"") {
-                    if let Some(rest) = line.get(pos + 8..) {
-                        if let Some(end) = rest.find('"') {
-                            strings.push(rest[..end].to_string());
+            if let Some(pos) = line.find("string \"") {
+                if let Some(rest) = line.get(pos + 8..) {
+                    if let Some(end) = rest.find('"') {
+                        strings.push(rest[..end].to_string());
+                        // 集齐 summary+body 即处理 (hints/actions 在其后, 无需等待块结束)
+                        if strings.len() == 4 {
+                            let summary = strings[2].clone();
+                            let body = strings[3].clone();
+                            if !summary.is_empty() {
+                                if let Some((t, b)) = classify(&summary, &body) {
+                                    catgirl_notify(&t, &b);
+                                }
+                            }
                         }
                     }
                 }
