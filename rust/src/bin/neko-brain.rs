@@ -164,7 +164,11 @@ fn mem_recall(query: &str) -> Vec<String> {
             if let Ok(v) = serde_json::from_str::<Value>(&resp) {
                 if let Some(arr) = v["results"].as_array() {
                     for r in arr {
-                        if let Some(t) = r["text"].as_str() { out.push(t.to_string()); }
+                        if let Some(t) = r["text"].as_str() {
+                            let spk = r["speaker"].as_str().unwrap_or("user");
+                            let label = if spk == "user" { "主人说过" } else { "你(猫娘)说过" };
+                            out.push(format!("{}：{}", label, t));
+                        }
                     }
                 }
             }
