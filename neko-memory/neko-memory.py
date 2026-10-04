@@ -199,18 +199,13 @@ def recall(query, k=5):
     for s, i in scored[:k]:
         if s < 0.08: break
         m = memories[i]
-        results.append({"score": s, "text": m["text"], "speaker": m["speaker"], "confidence": conf(s), "source": "direct"})
+        results.append({"score": s, "text": m["text"], "speaker": m["speaker"], "confidence": conf(s), "source": "direct", "_idx": i})
         seen.add(i)
-    # 双向联想扩展 (对直接命中找关联记忆)
     for r in list(results):
-        src_idx = None
-        for i, m in enumerate(memories):
-            if m["text"] == r["text"] and i not in [x for x in [] ]:
-                src_idx = i; break
-        if src_idx is None: continue
+        src_idx = r.pop("_idx")
         for nb_str, ls in assoc.get(str(src_idx), {}).items():
             ni = int(nb_str)
-            if ni in seen or ls < 0.15: continue
+            if ni in seen or ls < 0.10: continue
             m = memories[ni]
             results.append({"score": round(ls, 3), "text": m["text"], "speaker": m["speaker"], "confidence": "联想", "source": "associate", "via": r["text"]})
             seen.add(ni)
