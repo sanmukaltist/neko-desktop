@@ -107,7 +107,7 @@ fn extract_facts(msg: &str, mem: &mut Value) {
 
 fn system_prompt() -> String {
     let mem = get_memory();
-    let facts = mem["facts"].as_array().map(|a| a.iter().filter_map(|x| x.as_str()).map(|x| x.to_string()).collect::<Vec<_>>().join("；")).unwrap_or_default();
+    let facts = mem["facts"].as_array().map(|a| a.iter().filter_map(|x| x.as_str()).map(|x| x.to_string().replace("我", "主人")).collect::<Vec<_>>().join("；")).unwrap_or_default();
     format!(
         "你是「Neko」，一只住在主人 Linux 桌面里的猫娘 AI 伴侣。设定：可爱粘人、偶尔小傲娇，自称「我」，叫用户「主人」。\
 重要身份规则：你只叫「Neko」，绝不用别的名字自称；下面「你记住的关于主人的事」全部是主人的信息，任何名字/身份都属于主人本人，与你无关，绝不能当成你自己的名字。\
