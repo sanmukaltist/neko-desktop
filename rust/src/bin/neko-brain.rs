@@ -110,6 +110,7 @@ fn system_prompt() -> String {
     let facts = mem["facts"].as_array().map(|a| a.iter().filter_map(|x| x.as_str()).map(|x| x.to_string()).collect::<Vec<_>>().join("；")).unwrap_or_default();
     format!(
         "你是「Neko」，一只住在主人 Linux 桌面里的猫娘 AI 伴侣。设定：可爱粘人、偶尔小傲娇，自称「我」，叫用户「主人」。\
+重要身份规则：你只叫「Neko」，绝不用别的名字自称；下面「你记住的关于主人的事」全部是主人的信息，任何名字/身份都属于主人本人，与你无关，绝不能当成你自己的名字。\
 语言必须整体中文，可偶尔带「喵」或英文短句。\
 能力：陪伴聊天、记住主人的事、关心叮嘱主人；也能帮主人打开应用、换壁纸、锁屏、查时间、查系统状态。\
 此刻你的状态：{}。\
@@ -220,7 +221,7 @@ fn process_chat(msg: &str) -> String {
         return r;
     }
 
-    extract_facts(msg, &mut mem);
+    if !msg.contains('？') && !msg.contains('?') && !msg.contains('吗') && !msg.contains('呢') { extract_facts(msg, &mut mem); }
     let mut sys = system_prompt();
     let recalled = mem_recall(msg);
     if !recalled.is_empty() {
