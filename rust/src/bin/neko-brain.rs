@@ -168,7 +168,8 @@ fn mem_recall(query: &str) -> Vec<String> {
                         if let Some(t) = r["text"].as_str() {
                             let spk = r["speaker"].as_str().unwrap_or("user");
                             let label = if spk == "user" { "主人说过" } else { "你(猫娘)说过" };
-                            out.push(format!("{}：{}", label, t));
+                            let txt = if spk == "user" { t.replace("我", "主人") } else { t.to_string() };
+                            out.push(format!("{}：{}", label, txt));
                         }
                     }
                 }
