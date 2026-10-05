@@ -52,45 +52,61 @@ Window {
         req.open("GET", historyUrl); req.send()
     }
 
-    Component.onCompleted: {
-        bubble.x = settings.posX; bubble.y = settings.posY
-        refresh(); refreshHistory()
-    }
+    Component.onCompleted: { bubble.x = settings.posX; bubble.y = settings.posY; refresh(); refreshHistory() }
     Timer { interval: 5000; running: true; repeat: true; onTriggered: refresh() }
     Timer { interval: 2500; running: true; repeat: true; onTriggered: refreshHistory() }
 
     Rectangle {
         anchors.fill: parent
         radius: 18
-        color: "#26000000"
+        color: "#30000000"
         border.color: "#66ff8cc6"
         border.width: 1
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 14
+            anchors.margins: 12
             spacing: 8
+
+            // 顶部拖拽条
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 26
+                radius: 8
+                color: "#2aff8cc6"
+                Text {
+                    anchors.centerIn: parent
+                    text: "⠿ 拖动气泡"
+                    color: "#ffd6e8"; font.pixelSize: 11; font.bold: true
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    property real lastX: 0; property real lastY: 0
+                    onPressed: { lastX = mouseX; lastY = mouseY }
+                    onPositionChanged: {
+                        if (pressed) {
+                            bubble.x += mouseX - lastX
+                            bubble.y += mouseY - lastY
+                            lastX = mouseX
+                            lastY = mouseY
+                        }
+                    }
+                    onReleased: { settings.posX = bubble.x; settings.posY = bubble.y }
+                }
+            }
 
             Row {
                 Layout.fillWidth: true
                 spacing: 10
-                Text { text: "🐱"; font.pixelSize: 36 }
+                Text { text: "🐱"; font.pixelSize: 34 }
                 Column {
                     spacing: 2
                     Text {
                         text: (status.personality && status.personality.status_lang && status.personality.status_lang.length > 0)
                             ? ("[" + status.personality.mood + "] " + status.personality.status_lang[0]) : "🐱 你好呀，主人～"
-                        color: "#ffd6e8"; font.pixelSize: 12; font.bold: true; wrapMode: Text.WordWrap; width: 250
+                        color: "#ffd6e8"; font.pixelSize: 12; font.bold: true; wrapMode: Text.WordWrap; width: 266
                     }
                     Text { text: (status.personality && status.personality.banner) ? status.personality.banner : ""; color: "#c9a0b5"; font.pixelSize: 10 }
-                }
-                MouseArea {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 44
-                    property real sx: 0; property real sy: 0
-                    onPressed: { sx = mouseX; sy = mouseY }
-                    onPositionChanged: { if (pressed) { bubble.x += mouseX - sx; bubble.y += mouseY - sy } }
-                    onReleased: { settings.posX = bubble.x; settings.posY = bubble.y }
                 }
             }
 

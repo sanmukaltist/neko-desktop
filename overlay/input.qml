@@ -48,7 +48,7 @@ Window {
     Rectangle {
         anchors.fill: parent
         radius: 12
-        color: "#26000000"
+        color: "#2e000000"
         border.color: "#88ff8cc6"
         border.width: 1
 
@@ -57,25 +57,29 @@ Window {
             anchors.margins: 8
             spacing: 6
 
-            // 拖拽手柄
+            // 拖拽手柄 (加宽)
             Rectangle {
-                width: 16; height: parent.height
-                Text { anchors.centerIn: parent; text: "⠿"; color: "#c9a0b5"; font.pixelSize: 12 }
+                width: 24; height: parent.height
+                radius: 6
+                color: "#2aff8cc6"
+                Text { anchors.centerIn: parent; text: "⠿"; color: "#ffd6e8"; font.pixelSize: 14; font.bold: true }
                 MouseArea {
                     anchors.fill: parent
-                    property real mx: 0; property real my: 0
-                    onPressed: { mx = mouseX; my = mouseY }
+                    property real lastX: 0; property real lastY: 0
+                    onPressed: { lastX = mouseX; lastY = mouseY }
                     onPositionChanged: {
                         if (pressed) {
-                            inputWin.x = clampX(inputWin.x + mouseX - mx)
-                            inputWin.y = clampY(inputWin.y + mouseY - my)
+                            inputWin.x = clampX(inputWin.x + mouseX - lastX)
+                            inputWin.y = clampY(inputWin.y + mouseY - lastY)
+                            lastX = mouseX
+                            lastY = mouseY
                         }
                     }
                 }
             }
 
             Rectangle {
-                width: parent.width - 22 - 50; height: 28; radius: 8; color: "#22000000"; border.color: "#44ff8cc6"
+                width: parent.width - 30 - 54; height: 28; radius: 8; color: "#22000000"; border.color: "#44ff8cc6"
                 TextInput {
                     id: inputBox
                     anchors.fill: parent; anchors.margins: 5
@@ -85,7 +89,7 @@ Window {
                 }
             }
             Rectangle {
-                width: 50; height: 28; radius: 8; color: "#ff8cc6"
+                width: 54; height: 28; radius: 8; color: "#ff8cc6"
                 Text { anchors.centerIn: parent; text: "发送"; color: "#1a0f1a"; font.pixelSize: 12; font.bold: true }
                 MouseArea { anchors.fill: parent; onClicked: sendChat() }
             }
